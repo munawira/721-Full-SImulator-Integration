@@ -1,0 +1,100 @@
+///////////////////////////////////////////////////////////////////////////
+
+//
+// Implementation of the crazy SWL load operation.
+//
+static SS_WORD_TYPE
+ExecSWL(unsigned int addr, SS_WORD_TYPE store_data, SS_WORD_TYPE back_data) {
+   unsigned int mask, mask1;
+   unsigned int shift;
+   SS_WORD_TYPE data;
+
+#ifdef BYTES_LITTLE_ENDIAN
+   mask = (1 << ((3-(addr & 3)) * 8)) - 1;
+   data = ((~mask) & store_data) | (mask & back_data);
+#else
+   shift = ((addr & 3) * 8);
+   mask = (1 << shift) - 1;
+   mask1 = mask << ((4-(addr & 3))*8);
+   data = (((~mask) & store_data)>> shift) | (mask1 & back_data);
+#endif
+
+   return(data);
+}
+
+//
+// Implementation of the crazy SWR load operation.
+//
+static SS_WORD_TYPE
+ExecSWR(unsigned int addr, SS_WORD_TYPE store_data, SS_WORD_TYPE back_data) {
+   unsigned mask;
+   unsigned shift;
+   SS_WORD_TYPE data;
+
+#ifdef BYTES_LITTLE_ENDIAN
+   mask = (1 << ((4 - (addr & 3)) * 8)) - 1;
+   data = ((~mask) & back_data) | (mask & store_data);
+#else
+   shift = 3 - (addr & 0x3);
+   mask = 0xffffffff << (8 * shift);
+   
+   data = ((~mask) & back_data) | (mask & store_data);
+#endif
+
+   return(data);
+}
+
+//
+// Implementation of the crazy LWL load operation.
+//
+static SS_WORD_TYPE
+ExecLWL(unsigned int addr, SS_WORD_TYPE load_data, SS_WORD_TYPE back_data) {
+   unsigned int mask;
+   unsigned int shift;
+   unsigned int shift2; //AA
+   SS_WORD_TYPE data;
+  
+#ifdef BYTES_LITTLE_ENDIAN
+  shift = ((3-(addr & 3)) * 8);
+#else
+ shift = ((addr & 3) * 8);
+ #endif
+#ifdef BYTES_LITTLE_ENDIAN  
+   mask = (1 << shift) - 1;
+   data = ((~mask) & load_data) | (mask & back_data);
+/*    data = ((mask) & load_data) | (mask & back_data); */
+#else
+   mask = (1 << shift) - 1;
+   data = ((~mask) & (load_data<<shift)) | (mask & back_data);
+#endif
+
+   return(data);
+}
+
+//
+// Implementation of the crazy LWR load operation.
+//
+static SS_WORD_TYPE
+ExecLWR(unsigned int addr, SS_WORD_TYPE load_data, SS_WORD_TYPE back_data) {
+   unsigned int mask, shift, shift2;
+   SS_WORD_TYPE data;
+
+#ifdef BYTES_LITTLE_ENDIAN
+  shift = ((4-(addr & 3)) * 8);
+#else
+ shift = (((addr & 3)+1) * 8);
+ shift2 = ((3-(addr & 3)) * 8);
+#endif
+
+#ifdef BYTES_LITTLE_ENDIAN
+   mask = (1 << ((4 - (addr & 3)) * 8)) - 1;
+   data = ((~mask) & back_data) | (mask & load_data);
+/*    data = ((~mask) & back_data) | (mask & load_data); */
+#else
+   mask = (1 << shift) - 1;
+   // mask = (mask << 8) | 0xff;
+   data = ((~mask) & back_data) | (mask & (load_data >> shift2));
+#endif
+
+   return(data);
+}
